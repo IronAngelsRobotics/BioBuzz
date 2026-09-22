@@ -32,7 +32,7 @@ public class MyServoDemo extends LinearOpMode {
                 servo.setPosition(1);
             }
             if(gamepad1.x){
-                // reserve servo direction
+                // reverse servo direction
             }
         }
     }
