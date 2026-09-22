@@ -13,11 +13,12 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name="MyServo")
 public class MyServoDemo extends LinearOpMode {
     // Declare variables
+    Servo servo;
 
     @Override
     public void runOpMode() {
         // Init hardware
-        Servo servo;
+        servo = hardwareMap.get(Servo.class, "servo");
 
 
         // Wait for the game to start (driver presses PLAY)
@@ -26,7 +27,6 @@ public class MyServoDemo extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             // Do something
-            servo = hardwareMap.get(Servo.class, "servo");
 
             if(gamepad1.y){
                 servo.setPosition(1);
