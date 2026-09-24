@@ -1,5 +1,6 @@
-package org.firstinspires.ftc.teamcode36807.OpModes;
+package org.firstinspires.ftc.teamcode36807.OpModes.Practice;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -11,7 +12,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 
 @TeleOp(name="MyServo")
-public class MyServoDemo extends LinearOpMode {
+@Disabled
+public class ServoDemo extends LinearOpMode {
     // Declare variables
     Servo servo;
 

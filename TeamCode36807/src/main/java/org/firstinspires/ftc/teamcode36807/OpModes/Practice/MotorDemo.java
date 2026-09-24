@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode36807.OpModes;
+package org.firstinspires.ftc.teamcode36807.OpModes.Practice;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 
 //@Autonomous(name="MyAutonomous")
 @TeleOp(name="MotorDemo")
-//@Disabled   // Delete this line
-public class MotorDemoOpMode extends LinearOpMode {
+@Disabled   // Delete this line
+public class MotorDemo extends LinearOpMode {
     // Declare variable
     DcMotor motor;
     double maxPower = .125;
