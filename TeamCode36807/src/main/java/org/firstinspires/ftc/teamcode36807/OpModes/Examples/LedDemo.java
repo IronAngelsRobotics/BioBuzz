@@ -1,5 +1,6 @@
-package org.firstinspires.ftc.teamcode36807.OpModes.Practice;
+package org.firstinspires.ftc.teamcode36807.OpModes.Examples;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -11,6 +12,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 //@Autonomous(name="MyAutonomous")
 @TeleOp(name="LED")
+@Disabled   // comment out this line
 public class LedDemo extends LinearOpMode {
     // Declare variables
     DigitalChannel greenLED;
@@ -34,14 +36,17 @@ public class LedDemo extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             if(gamepad1.y){
+                // turn on green LED
                 redLED.setState(false);
                 greenLED.setState(true);
             }
             if(gamepad1.x){
+                // turn on red LED
                 greenLED.setState(false);
                 redLED.setState(true);
             }
             if(gamepad1.a){
+                // blink green LED
                 for(int x=0; x<5; x++) {
                     greenLED.setState(true);
                     redLED.setState(true);
