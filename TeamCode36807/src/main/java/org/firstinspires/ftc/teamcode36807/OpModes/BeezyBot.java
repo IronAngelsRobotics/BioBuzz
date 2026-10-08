@@ -67,11 +67,11 @@ public class BeezyBot extends LinearOpMode {
             {
                 if(flywheel.getPower() != 0) {
                     flywheel.setPower(0);
-                    sleep(1000);
                     servoMiddle.setPower(0);
                 }
                 else {
                     flywheel.setPower(.7);
+                    sleep(1000);
                     servoMiddle.setPower(-1.0);
                 }
             }
