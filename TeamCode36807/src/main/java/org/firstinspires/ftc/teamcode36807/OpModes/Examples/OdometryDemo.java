@@ -7,48 +7,32 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode36807.Robots.BeezyBot;
 
 
 /**
- * Simple OpModes to check a Gobilda odometry.
- * Note: manually push the robot forward/backward or left/right
+ * Simple OpModes to check a GoBilda odometry.
+ * Do not drive the robot.
+ * Push the robot forward: X values should increase
+ * Push the robot left: y value should increase.
+ * Manually rotate the robot inplace: X & Y should remain essentially unchanged
+ * while the heading changes.
+ *
+ * Reconfigure the odometry direction and offset as necessary.
+ *
+ *
  */
 
-
-//@Autonomous(name="MyAutonomous")
-@TeleOp(name="Odom")
-//@Disabled
+@TeleOp(name="Odometry")
+@Disabled
 public class OdometryDemo extends LinearOpMode {
+    BeezyBot robot;
 
     @Override
     public void runOpMode() {
-
-        GoBildaPinpointDriver pinpoint =
-                hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-
-        // IMPORTANT:
-        // Put your actual pod offsets here.
-        // X offset = forward/backward pod position
-        // Y offset = sideways pod position
-        pinpoint.setOffsets(
-                0,
-                0,
-                DistanceUnit.MM
-        );
-
-        // Change these to match your odometry pods.
-        pinpoint.setEncoderResolution(
-                GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD
-        );
-
-        // You may need to reverse one or both depending
-        // on how your pods are physically mounted.
-        pinpoint.setEncoderDirections(
-                GoBildaPinpointDriver.EncoderDirection.FORWARD,
-                GoBildaPinpointDriver.EncoderDirection.FORWARD
-        );
-
-        pinpoint.resetPosAndIMU();
+        // Call robot.odom.setEncoderDirections() to reverse to x/y as necessary.
+        robot = new BeezyBot(hardwareMap);
+        robot.odom.resetPosAndIMU();
 
         telemetry.addLine("Pinpoint ready");
         telemetry.addLine("Place robot at starting position.");
@@ -59,24 +43,18 @@ public class OdometryDemo extends LinearOpMode {
         while (opModeIsActive()) {
 
             // Must be called before reading position.
-            pinpoint.update();
+            robot.odom.update();
 
-            double x = pinpoint.getPosX(DistanceUnit.INCH);
-            double y = pinpoint.getPosY(DistanceUnit.INCH);
+            double x = robot.odom.getPosX(DistanceUnit.INCH);
+            double y = robot.odom.getPosY(DistanceUnit.INCH);
 
-            double heading =
-                    pinpoint.getHeading(AngleUnit.DEGREES);
-
-            double velocityX =
-                    pinpoint.getVelX(DistanceUnit.INCH);
-
-            double velocityY =
-                    pinpoint.getVelY(DistanceUnit.INCH);
+            double heading = robot.odom.getHeading(AngleUnit.DEGREES);
+            double velocityX = robot.odom.getVelX(DistanceUnit.INCH);
+            double velocityY = robot.odom.getVelY(DistanceUnit.INCH);
 
             telemetry.addLine("=== PINPOINT TEST ===");
-
-            telemetry.addData("X", "%.2f in", x);
-            telemetry.addData("Y", "%.2f in", y);
+            telemetry.addData("RobotX", "%.2f in", x);
+            telemetry.addData("RobotY", "%.2f in", y);
             telemetry.addData("Heading", "%.1f deg", heading);
 
             telemetry.addLine();
