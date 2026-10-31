@@ -46,7 +46,7 @@ public final class MecanumPathFollower {
     public double minLookahead=4,maxLookahead=10;
 
     //This determines when the robot considers the path complete.
-    public double positionTolerance=1.5;
+    public double positionTolerance= 1.5;
 
     public double headingTolerance=4;
     public double passThroughRadius=2.0;
@@ -131,12 +131,13 @@ public final class MecanumPathFollower {
     // Translation Hysteresis
     // ---------------------------------------------------------
 
-    // Stop correcting when within 1.5 inches of the target.
+    // Stop correcting when within .25 inches of the target.
     // This determines when hysteresis stops translation corrections
-    private double translationStopTolerance = 0.5;
+    private double translationStopTolerance = 0.25;
 
-    // Resume correcting if the robot drifts more than 1.0 inch.
-    private double translationResumeTolerance = 1.0;
+    // Resume correcting if the robot drifts more than 0.5 inch.
+    // The resume tolerance should be larger than the stop tolerance to prevent oscillation
+    private double translationResumeTolerance = 0.5;
 
     // Indicates whether translation corrections are suspended.
     private boolean translationHolding = false;
@@ -864,23 +865,24 @@ public final class MecanumPathFollower {
         );
 
         // ---------------------------------------------------------
-// Final Approach Translation Hysteresis
-// ---------------------------------------------------------
+        // Final Approach Translation Hysteresis
+        // ---------------------------------------------------------
 
-// Stop correcting translation when close to the final target.
-// Resume only if the robot moves outside the resume tolerance.
+        // Stop correcting translation when close to the final target.
+        // Resume only if the robot moves outside the resume tolerance.
         boolean suspendTranslation = false;
 
         if (finalSegment) {
-
-            // Use the existing position tolerance as the stop threshold.
-            // Resume only if the robot drifts farther than 2 inches.
             if (translationHolding) {
-                if (distance > 2.0) {
+                // Already stopped translating.
+                // Do not correct small errors or overshoot.
+                // Resume only if the robot drifts beyond 0.50".
+                if (distance > translationResumeTolerance) {
                     translationHolding = false;
                 }
             } else {
-                if (distance <= positionTolerance) {
+                // Stop translating once within 0.25 inches.
+                if (distance <= translationStopTolerance) {
                     translationHolding = true;
                 }
             }

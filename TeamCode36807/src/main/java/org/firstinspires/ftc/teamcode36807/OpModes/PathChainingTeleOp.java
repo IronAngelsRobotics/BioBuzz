@@ -35,10 +35,6 @@ public class PathChainingTeleOP extends OpMode {
     private static final double EXTRA_CLEARANCE_INCHES = 0.0;
     private static final double PLANNER_GRID_INCHES = 2.0;
 
-    // Adjust these to match your robot's dimensions.
-    private static final double ROBOT_WIDTH = 17.0;
-    private static final double ROBOT_LENGTH = 15.0;
-
     private BeezyBot robot;
     private MecanumPathFollower follower;
     private PathPlanner planner;
@@ -75,7 +71,6 @@ public class PathChainingTeleOP extends OpMode {
 
     @Override
     public void init() {
-
         robot = new BeezyBot(hardwareMap);
         robot.odom.resetPosAndIMU();
 
@@ -88,8 +83,8 @@ public class PathChainingTeleOP extends OpMode {
 
         planner = new PathPlanner(
                 FIELD_SIZE_INCHES,
-                ROBOT_WIDTH,
-                ROBOT_LENGTH,
+                robot.size.width,
+                robot.size.length,
                 EXTRA_CLEARANCE_INCHES,
                 PLANNER_GRID_INCHES
         );

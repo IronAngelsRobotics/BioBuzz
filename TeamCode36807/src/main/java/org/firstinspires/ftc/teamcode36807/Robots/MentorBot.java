@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode36807.Libs.MecanumDrive;
+import org.firstinspires.ftc.teamcode36807.Libs.RobotSize;
 
 import java.net.DatagramPacket;
 
@@ -18,6 +19,7 @@ public class MentorBot {
     public final MecanumDrive drive;
     public final GoBildaPinpointDriver odom;
     public final DcMotorEx intake;
+    public final RobotSize size = new RobotSize(17.5, 16.125); // include size of left and right wheels
 
 
     public MentorBot(HardwareMap hardwareMap){
@@ -44,7 +46,7 @@ public class MentorBot {
          * xOffset - how sideways from the center of the robot is the X (forward) pod? Left increases
          * yOffset - how far forward from the center of the robot is the Y (Strafe) pod? forward increases
          */
-        odom.setOffsets(-90, -182.88, DistanceUnit.MM);
+        odom.setOffsets(-92.25, -184.7875, DistanceUnit.MM);
 
         // Don't reset here. Call resetPosAndIMU() in the OpMode
         // odom.resetPosAndIMU();
