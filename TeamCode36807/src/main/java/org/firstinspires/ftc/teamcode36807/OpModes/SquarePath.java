@@ -144,5 +144,6 @@ public class SquarePath extends OpMode {
         if (follower != null) {
             follower.stop();
         }
+        robot.stop();
     }
 }

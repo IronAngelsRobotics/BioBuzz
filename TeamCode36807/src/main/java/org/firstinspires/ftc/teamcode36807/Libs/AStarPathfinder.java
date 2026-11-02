@@ -19,7 +19,8 @@ import java.util.PriorityQueue;
 public final class AStarPathfinder {
     private final double fieldSize, grid;
     private final List<RestrictedZone> zones;
-    private final double minCenter, maxCenter;
+    private final double minX, maxX, minY, maxY;
+    private final int countY;
     private final int count;
 
     // Tuning parameters, in inches. These add a SOFT preference for clearance,
@@ -31,23 +32,32 @@ public final class AStarPathfinder {
 
     public AStarPathfinder(double fieldSize, double grid, double clearance,
                            List<RestrictedZone> zones) {
+        this(fieldSize, grid, clearance, clearance, zones);
+    }
+
+    /** Separate X/Y center limits derived from the robot's fixed heading. */
+    public AStarPathfinder(double fieldSize, double grid, double wallClearanceX,
+                           double wallClearanceY, List<RestrictedZone> zones) {
         this.fieldSize = fieldSize;
         this.grid = grid;
         this.zones = zones;
-        minCenter = clearance;
-        maxCenter = fieldSize - clearance;
-        count = (int) Math.floor((maxCenter - minCenter) / grid) + 1;
-        if (count < 2) throw new IllegalArgumentException("Grid too large for field");
+        minX = wallClearanceX;
+        maxX = fieldSize - wallClearanceX;
+        minY = wallClearanceY;
+        maxY = fieldSize - wallClearanceY;
+        count = (int) Math.floor((maxX - minX) / grid) + 1;
+        countY = (int) Math.floor((maxY - minY) / grid) + 1;
+        if (count < 2 || countY < 2) throw new IllegalArgumentException("Grid too large for field");
     }
 
     private int index(int x, int y) { return y * count + x; }
 
     private BezierPath.Point point(int x, int y) {
-        return new BezierPath.Point(minCenter + x * grid, minCenter + y * grid);
+        return new BezierPath.Point(minX + x * grid, minY + y * grid);
     }
 
     private boolean free(double x, double y) {
-        if (x < minCenter || x > maxCenter || y < minCenter || y > maxCenter) return false;
+        if (x < minX || x > maxX || y < minY || y > maxY) return false;
         for (RestrictedZone z : zones) if (z.contains(x, y)) return false;
         return true;
     }
@@ -117,7 +127,7 @@ public final class AStarPathfinder {
     private int closestVisibleNode(BezierPath.Point p) {
         int best = -1;
         double bestD = Double.POSITIVE_INFINITY;
-        for (int y = 0; y < count; y++) {
+        for (int y = 0; y < countY; y++) {
             for (int x = 0; x < count; x++) {
                 BezierPath.Point q = point(x, y);
                 if (!clearLine(p, q)) continue;
@@ -142,7 +152,7 @@ public final class AStarPathfinder {
         int g = closestVisibleNode(goal);
         if (s < 0 || g < 0) return null;
 
-        int n = count * count;
+        int n = count * countY;
         double[] dist = new double[n];
         Arrays.fill(dist, Double.POSITIVE_INFINITY);
         int[] prev = new int[n];
@@ -169,7 +179,7 @@ public final class AStarPathfinder {
                 for (int dx : moves) {
                     if (dx == 0 && dy == 0) continue;
                     int xx = x + dx, yy = y + dy;
-                    if (xx < 0 || yy < 0 || xx >= count || yy >= count) continue;
+                    if (xx < 0 || yy < 0 || xx >= count || yy >= countY) continue;
                     int ni = index(xx, yy);
                     if (closed[ni]) continue;
                     BezierPath.Point b = point(xx, yy);

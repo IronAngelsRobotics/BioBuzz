@@ -8,7 +8,13 @@ import org.firstinspires.ftc.teamcode36807.Robots.BeezyBot;
 
 
 /**
- * This opmode tests that the GoBilda starter bot is functioning correctly.
+ * This opmode is for controlling the BeezyBot.
+ * Operation instruction:
+ * Use left joystick to move the robot forward/backward and strafe left
+ * Use right joystick to turn the robot left/right (rotate)
+ * Use the right trigger to toggle the intake on/off
+ * Use the left trigger to toggle shooting.
+ *   - turn intake on/off, flywheel on/off. raise/lower funnel
  */
 
 //@Autonomous(name="MyAutonomous")
@@ -57,8 +63,8 @@ public class BeezyBotOpMode extends LinearOpMode {
             {
                 double power = robot.flywheel.getPower();
                 if(power == 0){
-                    robot.flywheel.setPower(currentFlywheelPower);
                     robot.intake.setPower(0);
+                    robot.flywheel.setPower(currentFlywheelPower);
                     sleep(500);
                     robot.servoLift.setPosition(funnelUpPosition);
                 }
@@ -105,6 +111,6 @@ public class BeezyBotOpMode extends LinearOpMode {
             telemetry.update();
         }
 
-        robot.drive.stop();
+        robot.stop();
     }
 }

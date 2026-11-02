@@ -62,35 +62,24 @@ public class BeezyBot {
 
         // Don't reset here. Call resetPosAndIMU() in the OpMode
         // odom.resetPosAndIMU();
+
+        stop();
     }
 
-    private void init(){
-        stop();
-        flywheel.setPower(0);
-        intake.setPower(0);
-        servoLift.setPosition(0.5); // 0 degree
-        rgb.off();
-    }
 
     public void setPower(double forward, double strafe, double turn){
         drive.setPower(forward, strafe, turn);
     }
 
     /*
-    * Stop motors and intake
+     * Stop motors and rgb
+     *
      */
     public void stop(){
         drive.setPower(0, 0, 0);
         intake.setPower(0);
-    }
-
-    /*
-    * Stop all motors and reset robot to initial configuration.
-     */
-    public void off()
-    {
-        stop();
-        servoLift.setPosition(0.5);
+        flywheel.setPower(0);
+        servoLift.setPosition(0.5); // 0 degree
         rgb.off();
     }
 
