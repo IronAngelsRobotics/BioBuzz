@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode36807.Libs;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
 /**
  * Reusable 2D map and named navigation destinations for the BIOBUZZ field.
  *
@@ -12,7 +16,9 @@ package org.firstinspires.ftc.teamcode36807.Libs;
  * +X right, +Y up, positive heading counterclockwise.
  */
 public final class BioBuzzField {
+    public static final double SIDE_INCHES = 24.0;
     public static final double FIELD_SIZE = 144.0;
+    public static final double FIELD_ORIGIN = 72.0;
 
     /**
      * SAFETY INTERLOCK: set true only after measuring/verifying ALL permanent
@@ -25,7 +31,6 @@ public final class BioBuzzField {
     // Source measurements in STEP horizontal X/Z (in):
     //   left bar:  X [-24.73,-22.75], Z [-19.47,19.47]
     //   right bar: X [22.75,24.73],  Z [-19.47,19.47]
-    // Transform: fieldX = CAD_X + 72; fieldY = CAD_Z + 72.
     // IMPORTANT: The planner expands EACH rectangle by the robot clearance;
     // do not manually expand these footprints a second time.
     // These are floor support BARS, not every part of the HIVE structure.
@@ -42,8 +47,10 @@ public final class BioBuzzField {
         HOME,
         RED_LOADING_ZONE,
         BLUE_LOADING_ZONE,
-        RED_SHOOTING_POSITION,
-        BLUE_SHOOTING_POSITION
+        RED_SHOOTING_POSITION_RIGHT,
+        RED_SHOOTING_POSITION_LEFT,
+        BLUE_SHOOTING_POSITION_RIGHT,
+        BLUE_SHOOTING_POSITION_LEFT
     }
 
     private BioBuzzField() { }
@@ -51,14 +58,13 @@ public final class BioBuzzField {
     /** Returns a named destination; unmeasured positions fail explicitly. */
     public static Pose2D getDestination(Destination destination) {
         switch (destination) {
-            case HOME:
-                return new Pose2D(12.0, 12.0, 0.0);
-            // TODO: Add measured field coordinates and headings before use.
-            case RED_LOADING_ZONE:
-            case BLUE_LOADING_ZONE:
-            case RED_SHOOTING_POSITION:
-            case BLUE_SHOOTING_POSITION:
-                throw new IllegalStateException("Destination coordinates not verified: " + destination);
+            case HOME: return Helper.getPose2D(12.0, 12.0, 0.0);
+            case RED_LOADING_ZONE: return Helper.getPose2D(12, 108, Double.NaN);
+            case BLUE_LOADING_ZONE: return Helper.getPose2D(132, 36, Double.NaN);
+            case RED_SHOOTING_POSITION_LEFT: return Helper.getPose2D(60.5, 131, -90);
+            case RED_SHOOTING_POSITION_RIGHT: return Helper.getPose2D(60.5, 11, 90);
+            case BLUE_SHOOTING_POSITION_LEFT: return Helper.getPose2D(83.5, 11, 90);
+            case BLUE_SHOOTING_POSITION_RIGHT: return Helper.getPose2D(83.5, 131, -90);
             default:
                 throw new IllegalArgumentException("Unknown destination: " + destination);
         }
@@ -83,4 +89,5 @@ public final class BioBuzzField {
             planner.addRestrictedZone(new RestrictedZone(r[0], r[1], r[2], r[3]));
         }
     }
+
 }

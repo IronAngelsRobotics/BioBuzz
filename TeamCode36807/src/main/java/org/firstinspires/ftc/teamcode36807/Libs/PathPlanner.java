@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode36807.Libs;
 
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,8 +73,8 @@ public final class PathPlanner {
         boolean fixedHeading = true;
         for (PathTarget target : requested.targets()) {
             double diff = Math.toDegrees(Math.atan2(
-                    Math.sin(Math.toRadians(target.robotHeading - start.heading)),
-                    Math.cos(Math.toRadians(target.robotHeading - start.heading))));
+                    Math.sin(Math.toRadians(target.robotHeading - Helper.getPoseHeading(start))),
+                    Math.cos(Math.toRadians(target.robotHeading - Helper.getPoseHeading(start)))));
             if (Math.abs(diff) > 1e-6) fixedHeading = false;
         }
         if (wallMargin >= 0 && !fixedHeading) return null;
@@ -80,15 +82,15 @@ public final class PathPlanner {
         double wallX = obstacleClearance;
         double wallY = obstacleClearance;
         if (wallMargin >= 0) {
-            double a = Math.toRadians(start.heading);
+            double a = Math.toRadians(Helper.getPoseHeading(start));
             double halfL = robotLength / 2.0, halfW = robotWidth / 2.0;
             wallX = Math.abs(Math.cos(a)) * halfL + Math.abs(Math.sin(a)) * halfW + wallMargin;
             wallY = Math.abs(Math.sin(a)) * halfL + Math.abs(Math.cos(a)) * halfW + wallMargin;
         }
         AStarPathfinder astar = new AStarPathfinder(fieldSize, grid, wallX, wallY, zones);
         PlannedRoute result = new PlannedRoute();
-        BezierPath.Point current = new BezierPath.Point(start.x, start.y);
-        double heading = start.heading;
+        BezierPath.Point current = new BezierPath.Point(Helper.getPoseX(start), Helper.getPoseY(start));
+        double heading = Helper.getPoseHeading(start);
         double initialTravel = startTravelDirection;
         for (PathTarget target : requested.targets()) {
             BezierPath.Point goal = new BezierPath.Point(target.x, target.y);

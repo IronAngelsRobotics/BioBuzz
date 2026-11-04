@@ -1,15 +1,17 @@
 package org.firstinspires.ftc.teamcode36807.OpModes;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode36807.Libs.Helper;
 import org.firstinspires.ftc.teamcode36807.Libs.MecanumDrive;
 import org.firstinspires.ftc.teamcode36807.Libs.MecanumPathFollower;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-import org.firstinspires.ftc.teamcode36807.Libs.Pose2D;
 import org.firstinspires.ftc.teamcode36807.Robots.BeezyBot;
 
 /**
@@ -21,7 +23,7 @@ import org.firstinspires.ftc.teamcode36807.Robots.BeezyBot;
  */
 
 @TeleOp(name="Stay")
-//@Disabled   // Delete this line
+@Disabled   // Delete this line
 public class HoldPositionOpMode extends LinearOpMode {
     BeezyBot robot;
     private MecanumPathFollower follower;
@@ -72,7 +74,7 @@ public class HoldPositionOpMode extends LinearOpMode {
                 robot.odom.update();
 
                 Pose2D pose =
-                        new Pose2D(
+                        Helper.getPose2D(
 
                                 robot.odom.getPosX(
                                         DistanceUnit.INCH),
@@ -141,8 +143,8 @@ public class HoldPositionOpMode extends LinearOpMode {
 
                     // Automatically maintain position
                     follower.holdPosition(pose);
-                    telemetry.addData("X", "%.2f", Math.abs(pose.x) < 0.005 ? 0.0 : pose.x);
-                    telemetry.addData("Y", "%.2f", pose.y);
+                    telemetry.addData("X", "%.2f", Math.abs(Helper.getPoseX(pose)) < 0.005 ? 0.0 : Helper.getPoseX(pose));
+                    telemetry.addData("Y", "%.2f", Helper.getPoseY(pose));
 
                     // Disable movement during diagnostic test
                     //follower.stop();
@@ -159,9 +161,9 @@ public class HoldPositionOpMode extends LinearOpMode {
                 // Telemetry
                 // ---------------------------------------------
                 telemetry.addData("Holding", follower.isHoldingPosition());
-                telemetry.addData("X", "%.2f", pose.x);
-                telemetry.addData("Y", "%.2f", pose.y);
-                telemetry.addData("Heading", "%.2f", pose.heading);
+                telemetry.addData("X", "%.2f", Helper.getPoseX(pose));
+                telemetry.addData("Y", "%.2f", Helper.getPoseY(pose));
+                telemetry.addData("Heading", "%.2f", Helper.getPoseHeading(pose));
                 telemetry.update();
 
                 idle();

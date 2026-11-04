@@ -22,8 +22,9 @@ public class BeezyBot {
     public final DcMotor intake;
     public final RGBIndicator rgb;
     public final Servo servoLift;
-    public final RobotSize size = new RobotSize(17, 15.25); //width include size of left and right wheels
 
+    // width measured includes the width of wheels
+    public final RobotSize size = new RobotSize(17.25, 16.5);
 
     public BeezyBot(HardwareMap hardwareMap){
         drive = new MecanumDrive(hardwareMap);
@@ -52,7 +53,8 @@ public class BeezyBot {
          * xOffset - how sideways from the center of the robot is the X (forward) pod? Left increases
          * yOffset - how far forward from the center of the robot is the Y (Strafe) pod? forward increases
          */
-        odom.setOffsets(-76.2, -167, DistanceUnit.MM);
+       // odom.setOffsets(-76.2, -167, DistanceUnit.MM);
+        odom.setOffsets(-76.075, -84.55, DistanceUnit.MM);
 
         /* Configure encoder direction:
          * X position should increase when robot moves forward.

@@ -3,6 +3,10 @@ package org.firstinspires.ftc.teamcode36807.Libs;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
 /**
  * Non-blocking mecanum path follower with PD translation, proportional heading,
  * off-path recovery, and a separate PD station-keeping controller.
@@ -201,14 +205,14 @@ public final class MecanumPathFollower {
 
     private double updateAngularVelocity(Pose2D pose, double dt) {
         if (!headingVelocityInitialized) {
-            previousHoldHeading = pose.heading;
+            previousHoldHeading = pose.getHeading(AngleUnit.DEGREES);
             filteredAngularVelocity = 0;
             headingVelocityInitialized = true;
             return 0;
         }
 
         // Change in heading, accounting for wraparound
-        double deltaHeading = angleError(pose.heading, previousHoldHeading);
+        double deltaHeading = angleError(pose.getHeading(AngleUnit.DEGREES), previousHoldHeading);
 
         // Angular velocity in degrees/second
         double measuredAngularVelocity = deltaHeading / dt;
@@ -218,21 +222,21 @@ public final class MecanumPathFollower {
 
         filteredAngularVelocity += alpha * (measuredAngularVelocity - filteredAngularVelocity);
 
-        previousHoldHeading = pose.heading;
+        previousHoldHeading = pose.getHeading(AngleUnit.DEGREES);
 
         return filteredAngularVelocity;
     }
 
     public double getHoldErrorX(Pose2D pose) {
-        return holdX - pose.x;
+        return holdX - pose.getX(DistanceUnit.INCH);
     }
 
     public double getHoldErrorY(Pose2D pose) {
-        return holdY - pose.y;
+        return holdY - pose.getY(DistanceUnit.INCH);
     }
 
     public double getHoldHeadingError(Pose2D pose) {
-        return angleError(holdHeading, pose.heading);
+        return angleError(holdHeading, pose.getHeading(AngleUnit.DEGREES));
     }
 
     /**
@@ -252,8 +256,8 @@ public final class MecanumPathFollower {
 
         // Initialize tracking on the first update.
         if (!holdVelocityInitialized) {
-            previousHoldX = pose.x;
-            previousHoldY = pose.y;
+            previousHoldX = pose.getX(DistanceUnit.INCH);
+            previousHoldY = pose.getY(DistanceUnit.INCH);
 
             velocityX = 0;
             velocityY = 0;
@@ -263,12 +267,12 @@ public final class MecanumPathFollower {
         }
 
         // Calculate velocity from changes in position.
-        velocityX = (pose.x - previousHoldX) / dt;
-        velocityY = (pose.y - previousHoldY) / dt;
+        velocityX = (pose.getX(DistanceUnit.INCH) - previousHoldX) / dt;
+        velocityY = (pose.getY(DistanceUnit.INCH) - previousHoldY) / dt;
 
         // Save the current position for the next update.
-        previousHoldX = pose.x;
-        previousHoldY = pose.y;
+        previousHoldX = pose.getX(DistanceUnit.INCH);
+        previousHoldY = pose.getY(DistanceUnit.INCH);
     }
 
     /** Begin active position hold at a fixed field pose (inches, degrees). */
@@ -277,9 +281,9 @@ public final class MecanumPathFollower {
         // Cancel any active path
         cancel();
 
-        holdX = pose.x;
-        holdY = pose.y;
-        holdHeading = pose.heading;
+        holdX = pose.getX(DistanceUnit.INCH);
+        holdY = pose.getY(DistanceUnit.INCH);
+        holdHeading = pose.getHeading(AngleUnit.DEGREES);
 
         // Reset previous motor commands
         prevForward = 0;
@@ -288,13 +292,13 @@ public final class MecanumPathFollower {
 
         holdingPosition = true;
         lastTime = 0;
-        previousHoldHeading = pose.heading;
+        previousHoldHeading = pose.getHeading(AngleUnit.DEGREES);
         filteredAngularVelocity = 0;
         headingVelocityInitialized = false;
 
         // Initialize position tracking using the current Pinpoint position.
-        previousHoldX = pose.x;
-        previousHoldY = pose.y;
+        previousHoldX = pose.getX(DistanceUnit.INCH);
+        previousHoldY = pose.getY(DistanceUnit.INCH);
 
         // Reset estimated velocity when station keeping starts.
         velocityX = 0;
@@ -356,8 +360,8 @@ public final class MecanumPathFollower {
         // Position error in field coordinates
         // ---------------------------------------------------------
 
-        double errorX = holdX - pose.x;
-        double errorY = holdY - pose.y;
+        double errorX = holdX - pose.getX(DistanceUnit.INCH);
+        double errorY = holdY - pose.getY(DistanceUnit.INCH);
 
         double distanceError =
                 Math.hypot(errorX, errorY);
@@ -367,7 +371,7 @@ public final class MecanumPathFollower {
         // Convert field error to robot coordinates
         // ---------------------------------------------------------
 
-        double[] movement = fieldToRobot(errorX, errorY, pose.heading);
+        double[] movement = fieldToRobot(errorX, errorY, pose.getHeading(AngleUnit.DEGREES));
         double forward = movement[0];
         double strafe = movement[1];
 
@@ -380,7 +384,7 @@ public final class MecanumPathFollower {
         strafe *= holdPositionKp;
 
         // Convert measured field velocity into robot-relative velocity.
-        double headingRadians = Math.toRadians(pose.heading);
+        double headingRadians = Math.toRadians(pose.getHeading(AngleUnit.DEGREES));
 
         double forwardVelocity = velocityX * Math.cos(headingRadians) + velocityY * Math.sin(headingRadians);
         double strafeVelocity = velocityX * Math.sin(headingRadians) - velocityY * Math.cos(headingRadians);
@@ -412,7 +416,7 @@ public final class MecanumPathFollower {
         // Heading PD: positive Pinpoint error (CCW) needs negative motor
         // turn because the mecanum mixer uses clockwise-positive turn.
 
-        double headingError = angleError(holdHeading, pose.heading);
+        double headingError = angleError(holdHeading, pose.getHeading(AngleUnit.DEGREES));
 
         // Estimate angular velocity in degrees per second.
         double angularVelocity = updateAngularVelocity(pose, dt);
@@ -464,10 +468,10 @@ public final class MecanumPathFollower {
     public boolean isAtTarget(Pose2D pose) {
 
         // Calculate distance from the saved target position.
-        double distanceError = Math.hypot(holdX - pose.x, holdY - pose.y);
+        double distanceError = Math.hypot(holdX - pose.getX(DistanceUnit.INCH), holdY - pose.getY(DistanceUnit.INCH));
 
         // Calculate the shortest heading error.
-        double headingError = holdHeading - pose.heading;
+        double headingError = holdHeading - pose.getHeading(AngleUnit.DEGREES);
 
         while (headingError > 180) headingError -= 360;
         while (headingError < -180) headingError += 360;
@@ -484,7 +488,7 @@ public final class MecanumPathFollower {
      * @param heading Target heading in degrees
      */
     public void setTargetPose(double x, double y, double heading) {
-        Pose2D targetPose = new Pose2D(x, y, heading);
+        Pose2D targetPose = Helper.getPose2D(x, y, heading);
         startHolding(targetPose);
     }
 
@@ -508,7 +512,7 @@ public final class MecanumPathFollower {
         for(int i=0;i<=200;i++) {
             double t=i/200.0;
             BezierPath.Point p=curve.getPoint(t);
-            double d=Math.hypot(p.x-pose.x,p.y-pose.y);
+            double d=Math.hypot(p.x-pose.getX(DistanceUnit.INCH),p.y-pose.getY(DistanceUnit.INCH));
             if(d<bestD) { bestD=d; bestT=t; }
         }
         distanceFromPath=bestD;
@@ -704,8 +708,8 @@ public final class MecanumPathFollower {
         commandedForward = 0;
         commandedStrafe = 0;
         pathVelocityInitialized = false;
-        previousPathX = pose.x;
-        previousPathY = pose.y;
+        previousPathX = pose.getX(DistanceUnit.INCH);
+        previousPathY = pose.getY(DistanceUnit.INCH);
         recovering = false;
         recoveryStableSamples = 0;
         distanceFromPath = 0;
@@ -714,8 +718,8 @@ public final class MecanumPathFollower {
 
         PathSegment next = route.segments().get(index);
         progress = next.isRotationOnly() ? 0 : closestAnywhere(next.curve, pose);
-        targetX = pose.x;
-        targetY = pose.y;
+        targetX = pose.getX(DistanceUnit.INCH);
+        targetY = pose.getY(DistanceUnit.INCH);
     }
 
     /** Advance the active route by one loop using the supplied Pinpoint pose. */
@@ -741,7 +745,7 @@ public final class MecanumPathFollower {
         if (segment.isRotationOnly()) {
 
             double headingError =
-                    angleError(segment.endHeading, pose.heading);
+                    angleError(segment.endHeading, pose.getHeading(AngleUnit.DEGREES));
 
             // Positive motor turn is clockwise;
             // positive Pinpoint heading is counterclockwise.
@@ -773,8 +777,8 @@ public final class MecanumPathFollower {
 
         double t=nearestT(curve,pose);
         BezierPath.Point end=curve.p3;
-        double distance=Math.hypot(end.x-pose.x,end.y-pose.y);
-        double headingErr=angleError(segment.endHeading,pose.heading);
+        double distance=Math.hypot(end.x-pose.getX(DistanceUnit.INCH),end.y-pose.getY(DistanceUnit.INCH));
+        double headingErr=angleError(segment.endHeading,pose.getHeading(AngleUnit.DEGREES));
         boolean finalSegment=index==route.segments().size()-1;
         // PASS_THROUGH: require near-end progress AND physical proximity.
         double transitionRadius=Math.min(passThroughRadius,Math.max(0.5,curve.length()*0.25));
@@ -786,8 +790,8 @@ public final class MecanumPathFollower {
             // enterSegment() already initialized progress from this pose.
             t=progress;
             end=curve.p3;
-            distance=Math.hypot(end.x-pose.x,end.y-pose.y);
-            headingErr=angleError(segment.endHeading,pose.heading);
+            distance=Math.hypot(end.x-pose.getX(DistanceUnit.INCH),end.y-pose.getY(DistanceUnit.INCH));
+            headingErr=angleError(segment.endHeading,pose.getHeading(AngleUnit.DEGREES));
             finalSegment=index==route.segments().size()-1;
             if (segment.isRotationOnly()) {
                 stop();
@@ -815,8 +819,8 @@ public final class MecanumPathFollower {
         double targetHeading=segment.startHeading+
                 angleError(segment.endHeading,segment.startHeading)*lookT;
         if(stopping && distance<6) targetHeading=segment.endHeading;
-        double ex=aim.x-pose.x,ey=aim.y-pose.y;
-        double theta=Math.toRadians(pose.heading);
+        double ex=aim.x-pose.getX(DistanceUnit.INCH),ey=aim.y-pose.getY(DistanceUnit.INCH);
+        double theta=Math.toRadians(pose.getHeading(AngleUnit.DEGREES));
         // Convert field-relative position errors to robot-relative movement.
         // At heading 0°, robot forward is +X and robot left is +Y.
         double forward = ex * Math.cos(theta) + ey * Math.sin(theta);
@@ -826,12 +830,12 @@ public final class MecanumPathFollower {
         double velocityY = 0;
 
         if (pathVelocityInitialized) {
-            velocityX = (pose.x - previousPathX) / dt;
-            velocityY = (pose.y - previousPathY) / dt;
+            velocityX = (pose.getX(DistanceUnit.INCH) - previousPathX) / dt;
+            velocityY = (pose.getY(DistanceUnit.INCH) - previousPathY) / dt;
         }
 
-        previousPathX = pose.x;
-        previousPathY = pose.y;
+        previousPathX = pose.getX(DistanceUnit.INCH);
+        previousPathY = pose.getY(DistanceUnit.INCH);
         pathVelocityInitialized = true;
 
         // Convert velocity into robot-relative coordinates.
@@ -859,7 +863,7 @@ public final class MecanumPathFollower {
         correct its heading in the proper direction.
          */
         double turn = clip(
-                -headingKp * angleError(targetHeading, pose.heading),
+                -headingKp * angleError(targetHeading, pose.getHeading(AngleUnit.DEGREES)),
                 -maxTurnPower,
                 maxTurnPower
         );

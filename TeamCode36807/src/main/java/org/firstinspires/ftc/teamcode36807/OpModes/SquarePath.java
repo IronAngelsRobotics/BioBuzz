@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.teamcode36807.OpModes;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode36807.Libs.*;
 import org.firstinspires.ftc.teamcode36807.Robots.BeezyBot;
 
@@ -16,6 +18,7 @@ import org.firstinspires.ftc.teamcode36807.Robots.BeezyBot;
  * Uses the same planner coordinates and follower as PathChainingTeleOP.
  */
 @TeleOp(name = "SquarePath")
+@Disabled
 public class SquarePath extends OpMode {
 
     private static final double SIDE_INCHES = 24.0;
@@ -56,7 +59,7 @@ public class SquarePath extends OpMode {
         robot.odom.update();
 
         // Pinpoint (odometry) origin is (0,0); planner origin is (72,72).
-        Pose2D pose = new Pose2D(
+        Pose2D pose = Helper.getPose2D(
                 robot.odom.getPosX(DistanceUnit.INCH) + FIELD_ORIGIN,
                 robot.odom.getPosY(DistanceUnit.INCH) + FIELD_ORIGIN,
                 robot.odom.getHeading(AngleUnit.DEGREES)
@@ -86,11 +89,11 @@ public class SquarePath extends OpMode {
         telemetry.addData("State", follower.isFollowing() ? "Following"
                 : holding ? "Holding" : "Ready");
         telemetry.addData("Segment", follower.segmentIndex());
-        telemetry.addData("Position (in)", "X %.2f  Y %.2f", pose.x, pose.y);
-        telemetry.addData("Heading (deg)", "%.1f", pose.heading);
+        telemetry.addData("Position (in)", "X %.2f  Y %.2f", Helper.getPoseX(pose), Helper.getPoseY(pose));
+        telemetry.addData("Heading (deg)", "%.1f", Helper.getPoseHeading(pose));
         if (startingPose != null) {
-            double errorX = startingPose.x - pose.x;
-            double errorY = startingPose.y - pose.y;
+            double errorX = Helper.getPoseX(startingPose)- Helper.getPoseX(pose);
+            double errorY = Helper.getPoseY(startingPose) - Helper.getPoseY(pose);
             telemetry.addData("Start error X (in)", "%.3f", errorX);
             telemetry.addData("Start error Y (in)", "%.3f", errorY);
             telemetry.addData("Start error total (in)", "%.3f",
@@ -108,32 +111,32 @@ public class SquarePath extends OpMode {
         // The square is relative to the robot's heading at the start.
         // In the existing coordinate system, forward at 0 deg is +X,
         // and right at 0 deg is -Y.
-        double radians = Math.toRadians(start.heading);
+        double radians = Math.toRadians(Helper.getPoseHeading(start));
         double forwardX = Math.cos(radians) * SIDE_INCHES;
         double forwardY = Math.sin(radians) * SIDE_INCHES;
         double rightX = Math.sin(radians) * SIDE_INCHES;
         double rightY = -Math.cos(radians) * SIDE_INCHES;
 
-        double x1 = start.x + forwardX;
-        double y1 = start.y + forwardY;
+        double x1 = Helper.getPoseX(start) + forwardX;
+        double y1 = Helper.getPoseY(start) + forwardY;
         double x2 = x1 + rightX;
         double y2 = y1 + rightY;
-        double x3 = start.x + rightX;
-        double y3 = start.y + rightY;
+        double x3 = Helper.getPoseX(start) + rightX;
+        double y3 = Helper.getPoseY(start) + rightY;
 
         PathSequence sequence = new PathSequence()
-                .add(x1, y1, start.heading, start.heading, WaypointMode.STOP)
-                .add(x2, y2, start.heading, start.heading, WaypointMode.STOP)
-                .add(x3, y3, start.heading, start.heading, WaypointMode.STOP)
-                .add(start.x, start.y, start.heading, start.heading, WaypointMode.STOP);
+                .add(x1, y1, Helper.getPoseHeading(start), Helper.getPoseHeading(start), WaypointMode.STOP)
+                .add(x2, y2, Helper.getPoseHeading(start), Helper.getPoseHeading(start), WaypointMode.STOP)
+                .add(x3, y3, Helper.getPoseHeading(start), Helper.getPoseHeading(start), WaypointMode.STOP)
+                .add(Helper.getPoseX(start), Helper.getPoseY(start), Helper.getPoseHeading(start), Helper.getPoseHeading(start), WaypointMode.STOP);
 
-        PlannedRoute route = planner.plan(start, sequence, start.heading);
+        PlannedRoute route = planner.plan(start, sequence, Helper.getPoseHeading(start));
         if (route == null || route.isEmpty()) {
             telemetry.addLine("Square path planning failed; check field clearance.");
             return;
         }
 
-        startingPose = new Pose2D(start.x, start.y, start.heading);
+        startingPose = Helper.getPose2D(Helper.getPoseX(start), Helper.getPoseY(start), Helper.getPoseHeading(start));
         currentRoute = route;
         holding = false;
         follower.start(route);

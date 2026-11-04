@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode36807.Libs;
 
 
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
 /**
  * Predefined Alliance field positions.
  */
@@ -35,9 +37,9 @@ public final class Positions {
      */
     public static final AlliancePositions BLUE =
             new AlliancePositions(
-                    new Pose2D(132, 36, Double.NaN),   // Park
-                    new Pose2D(84, 7.625, 90),         // Shooting 1
-                    new Pose2D(84, 136.375, -90)       // Shooting 2
+                    Helper.getPose2D(132, 36, Double.NaN),   // Park
+                    Helper.getPose2D(84, 7.625, 90),         // Shooting 1
+                    Helper.getPose2D(84, 136.375, -90)       // Shooting 2
             );
 
     /**
@@ -46,9 +48,9 @@ public final class Positions {
      */
     public static final AlliancePositions RED =
             new AlliancePositions(
-                    new Pose2D(12, 108, Double.NaN), // Park
-                    new Pose2D(60, 136.375, -90),    // Shooting 1
-                    new Pose2D(60, 7.625, 90)        // Shooting 2
+                    Helper.getPose2D(12, 108, Double.NaN), // Park
+                    Helper.getPose2D(60, 136.375, -90),    // Shooting 1
+                    Helper.getPose2D(60, 7.625, 90)        // Shooting 2
             );
 
     /**
