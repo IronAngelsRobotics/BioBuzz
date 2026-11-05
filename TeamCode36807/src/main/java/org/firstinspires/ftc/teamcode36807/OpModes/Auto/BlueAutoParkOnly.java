@@ -41,7 +41,7 @@ public class BlueAutoParkOnly extends OpMode {
                 robot.drive.getWheel(MecanumDrive.Wheel.BACK_RIGHT));
 
         planner = new PathPlanner(BioBuzzField.FIELD_SIZE,
-                robot.size.width, robot.size.length, 0.0, 2.0);
+                robot.size.width, robot.size.length, 0.0, 2.0, 0.0);
         BioBuzzField.configureRestrictedZones(planner);
         telemetry.addLine("Place robot at BLUE_SHOOTING_POSITION_LEFT, heading toward hive.");
         telemetry.addLine("Will navigate to BLUE_LOADING_ZONE when START is pressed.");
@@ -51,6 +51,8 @@ public class BlueAutoParkOnly extends OpMode {
     @Override
     public void start() {
         runtime.reset();
+        autoFinished = false;
+        parkingTime = Double.NaN;
 
         routeAttempted = false;
         holding = false;
@@ -160,7 +162,7 @@ public class BlueAutoParkOnly extends OpMode {
             follower.holdPosition(pose);
         }
 
-        if (!follower.isFollowing() && Double.isNaN(parkingTime)) {
+        if (holding && Double.isNaN(parkingTime)) {
             parkingTime = runtime.seconds();
         }
 
@@ -180,7 +182,11 @@ public class BlueAutoParkOnly extends OpMode {
                     follower.getTargetX(), follower.getTargetY());
         }
 
-        if (planningFailed) telemetry.addLine("Check destination and restricted-zone clearance.");
+        if (planningFailed) {
+            telemetry.addData("Failure Reason", planner.getFailureReason());
+            telemetry.addData("Failure Details", planner.getFailureDetails());
+            telemetry.addData("Failed Waypoint", planner.getFailedWaypoint());
+        }
 
         telemetry.addData("Parking Time", "%.2f seconds", parkingTime);
         telemetry.update();

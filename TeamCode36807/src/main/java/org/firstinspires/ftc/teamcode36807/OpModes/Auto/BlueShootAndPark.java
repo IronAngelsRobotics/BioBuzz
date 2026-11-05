@@ -44,7 +44,7 @@ public class BlueShootAndPark extends OpMode {
                 robot.drive.getWheel(MecanumDrive.Wheel.BACK_RIGHT));
 
         planner = new PathPlanner(BioBuzzField.FIELD_SIZE,
-                robot.size.width, robot.size.length, 0.0, 2.0);
+                robot.size.width, robot.size.length, 0.0, 2.0, 0.0);
         BioBuzzField.configureRestrictedZones(planner);
         telemetry.addLine("Place robot at BLUE_SHOOTING_POSITION_LEFT, heading toward hive.");
         telemetry.addLine("Will navigate to BLUE_LOADING_ZONE when START is pressed.");
@@ -59,6 +59,9 @@ public class BlueShootAndPark extends OpMode {
         holding = false;
         planningFailed = false;
         currentRoute = null;
+
+        autoFinished = false;
+        parkingTime = Double.NaN;
 
         // Configure the robot's starting position
         Pose2D pose = BioBuzzField.getDestination(
@@ -163,7 +166,7 @@ public class BlueShootAndPark extends OpMode {
             follower.holdPosition(pose);
         }
 
-        if (!follower.isFollowing() && Double.isNaN(parkingTime)) {
+        if (holding && Double.isNaN(parkingTime))  {
             parkingTime = runtime.seconds();
         }
 

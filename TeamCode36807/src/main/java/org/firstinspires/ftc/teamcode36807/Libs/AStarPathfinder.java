@@ -62,6 +62,25 @@ public final class AStarPathfinder {
         return true;
     }
 
+    /** True when a robot-center coordinate lies within the wall limits. */
+    public boolean isWithinBounds(double x, double y) {
+        return Double.isFinite(x) && Double.isFinite(y)
+                && x >= minX && x <= maxX && y >= minY && y <= maxY;
+    }
+
+    /** True when a coordinate intersects an already-expanded restricted zone. */
+    public boolean isBlocked(double x, double y) {
+        for (RestrictedZone zone : zones) {
+            if (zone.contains(x, y)) return true;
+        }
+        return false;
+    }
+
+    public double getMinX() { return minX; }
+    public double getMaxX() { return maxX; }
+    public double getMinY() { return minY; }
+    public double getMaxY() { return maxY; }
+
     public boolean clearLine(BezierPath.Point a, BezierPath.Point b) {
         if (!free(a.x, a.y) || !free(b.x, b.y)) return false;
         for (RestrictedZone z : zones) {

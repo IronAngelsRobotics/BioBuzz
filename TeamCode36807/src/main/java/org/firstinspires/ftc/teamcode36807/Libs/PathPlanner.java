@@ -4,12 +4,63 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /** Static obstacle planner. Returns null when no collision-free route exists. */
 public final class PathPlanner {
     private final List<RestrictedZone> zones = new ArrayList<>();
     private final double fieldSize, obstacleClearance, grid;
     private final double robotWidth, robotLength, wallMargin;
+
+    /** Diagnostic status of the most recent plan() call. */
+    public enum FailureReason {
+        NONE, EMPTY_SEQUENCE, HEADING_CHANGE_NOT_SUPPORTED,
+        START_OUT_OF_BOUNDS, GOAL_OUT_OF_BOUNDS,
+        START_BLOCKED, GOAL_BLOCKED, NO_PATH_FOUND,
+        UNSAFE_CURVE, EMPTY_ROUTE
+    }
+
+    private FailureReason failureReason = FailureReason.NONE;
+    private String failureDetails = "";
+    // 1-based index of the requested waypoint; 0 denotes the initial start.
+    // -1 means not applicable.
+    private int failedWaypoint = -1;
+
+    public FailureReason getFailureReason() { return failureReason; }
+    public String getFailureDetails() { return failureDetails; }
+    public int getFailedWaypoint() { return failedWaypoint; }
+
+    private void clearFailure() {
+        failureReason = FailureReason.NONE;
+        failureDetails = "";
+        failedWaypoint = -1;
+    }
+
+    private void setFailure(FailureReason reason, String details, int waypoint) {
+        failureReason = reason;
+        failureDetails = details;
+        failedWaypoint = waypoint;
+    }
+
+    private boolean validatePosition(AStarPathfinder astar, double x, double y,
+                                     boolean start, int waypoint) {
+        String label = start ? "Start" : "Goal";
+        if (!astar.isWithinBounds(x, y)) {
+            setFailure(start ? FailureReason.START_OUT_OF_BOUNDS : FailureReason.GOAL_OUT_OF_BOUNDS,
+                    String.format(Locale.US,
+                            "%s (%.2f, %.2f) outside bounds; allowed X %.2f..%.2f, Y %.2f..%.2f",
+                            label, x, y, astar.getMinX(), astar.getMaxX(),
+                            astar.getMinY(), astar.getMaxY()), waypoint);
+            return false;
+        }
+        if (astar.isBlocked(x, y)) {
+            setFailure(start ? FailureReason.START_BLOCKED : FailureReason.GOAL_BLOCKED,
+                    String.format(Locale.US, "%s (%.2f, %.2f) inside expanded restricted zone",
+                            label, x, y), waypoint);
+            return false;
+        }
+        return true;
+    }
 
     /** Existing constructor: preserves old behavior for other OpModes. */
     public PathPlanner(double fieldSize, double robotWidth, double robotLength,
@@ -66,7 +117,11 @@ public final class PathPlanner {
     }
 
     public PlannedRoute plan(Pose2D start, PathSequence requested, double startTravelDirection) {
-        if (requested == null || requested.isEmpty()) return null;
+        clearFailure();
+        if (requested == null || requested.isEmpty()) {
+            setFailure(FailureReason.EMPTY_SEQUENCE, "No waypoints provided", -1);
+            return null;
+        }
 
         // The heading-dependent wall footprint is safe only when the robot
         // keeps the same heading along the ENTIRE route.
@@ -77,7 +132,11 @@ public final class PathPlanner {
                     Math.cos(Math.toRadians(target.robotHeading - Helper.getPoseHeading(start)))));
             if (Math.abs(diff) > 1e-6) fixedHeading = false;
         }
-        if (wallMargin >= 0 && !fixedHeading) return null;
+        if (wallMargin >= 0 && !fixedHeading) {
+            setFailure(FailureReason.HEADING_CHANGE_NOT_SUPPORTED,
+                    "Rectangular wall clearance requires a fixed heading", -1);
+            return null;
+        }
 
         double wallX = obstacleClearance;
         double wallY = obstacleClearance;
@@ -90,12 +149,21 @@ public final class PathPlanner {
         AStarPathfinder astar = new AStarPathfinder(fieldSize, grid, wallX, wallY, zones);
         PlannedRoute result = new PlannedRoute();
         BezierPath.Point current = new BezierPath.Point(Helper.getPoseX(start), Helper.getPoseY(start));
+        if (!validatePosition(astar, current.x, current.y, true, 0)) return null;
         double heading = Helper.getPoseHeading(start);
         double initialTravel = startTravelDirection;
+        int waypoint = 0;
         for (PathTarget target : requested.targets()) {
+            waypoint++;
             BezierPath.Point goal = new BezierPath.Point(target.x, target.y);
+            if (!validatePosition(astar, goal.x, goal.y, false, waypoint)) return null;
             List<BezierPath.Point> points = astar.find(current, goal);
-            if (points == null) return null;
+            if (points == null) {
+                setFailure(FailureReason.NO_PATH_FOUND,
+                        String.format(Locale.US, "No route from (%.2f, %.2f) to (%.2f, %.2f)",
+                                current.x, current.y, goal.x, goal.y), waypoint);
+                return null;
+            }
             for (int i = 0; i < points.size() - 1; i++) {
                 BezierPath.Point a = points.get(i), b = points.get(i + 1);
                 if (Math.hypot(b.x - a.x, b.y - a.y) < 1e-6) continue;
@@ -104,7 +172,12 @@ public final class PathPlanner {
                 double exit = last ? target.travelDirection : bearing(a, points.get(i + 2));
                 BezierPath curve = candidate(a, b, entry, exit);
                 if (!safeCurve(curve, astar)) curve = BezierPath.straight(a, b);
-                if (!safeCurve(curve, astar)) return null;
+                if (!safeCurve(curve, astar)) {
+                    setFailure(FailureReason.UNSAFE_CURVE,
+                            String.format(Locale.US, "Unsafe segment (%.2f, %.2f) to (%.2f, %.2f)",
+                                    a.x, a.y, b.x, b.y), waypoint);
+                    return null;
+                }
                 double endHeading = last ? target.robotHeading : heading;
                 WaypointMode mode = last ? target.mode : WaypointMode.PASS_THROUGH;
                 result.add(new PathSegment(curve, heading, endHeading, mode));
@@ -114,6 +187,10 @@ public final class PathPlanner {
             heading = target.robotHeading;
             initialTravel = target.travelDirection;
         }
-        return result.isEmpty() ? null : result;
+        if (result.isEmpty()) {
+            setFailure(FailureReason.EMPTY_ROUTE, "Planning produced no path segments", -1);
+            return null;
+        }
+        return result;
     }
 }
