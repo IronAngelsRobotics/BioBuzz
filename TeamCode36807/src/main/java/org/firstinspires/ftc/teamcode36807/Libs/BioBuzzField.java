@@ -61,10 +61,10 @@ public final class BioBuzzField {
             case HOME: return Helper.getPose2D(12.0, 12.0, 0.0);
             case RED_LOADING_ZONE: return Helper.getPose2D(12, 108, Double.NaN);
             case BLUE_LOADING_ZONE: return Helper.getPose2D(132, 36, Double.NaN);
-            case RED_SHOOTING_POSITION_LEFT: return Helper.getPose2D(60.5, 131, -90);
-            case RED_SHOOTING_POSITION_RIGHT: return Helper.getPose2D(60.5, 11, 90);
-            case BLUE_SHOOTING_POSITION_LEFT: return Helper.getPose2D(83.5, 11, 90);
-            case BLUE_SHOOTING_POSITION_RIGHT: return Helper.getPose2D(83.5, 131, -90);
+            case RED_SHOOTING_POSITION_LEFT: return Helper.getPose2D(60.5, 131, 90);
+            case RED_SHOOTING_POSITION_RIGHT: return Helper.getPose2D(60.5, 11, -90);
+            case BLUE_SHOOTING_POSITION_LEFT: return Helper.getPose2D(83.5, 11, -90);
+            case BLUE_SHOOTING_POSITION_RIGHT: return Helper.getPose2D(83.5, 131, 90);
             default:
                 throw new IllegalArgumentException("Unknown destination: " + destination);
         }

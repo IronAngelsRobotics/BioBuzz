@@ -29,9 +29,9 @@ public class BeezyBotOpMode extends LinearOpMode {
     boolean previousB = false;
     boolean previousY = false;
     double currentFlywheelPower = 0.5;
-    double intakeMaxPower = .27;
+    double intakeMaxPower = .4;
     private static final double funnelUpPosition = 0.41;
-    private static final double funnelDownPosition = 0.54;
+    private static final double funnelDownPosition = 0.522;
 
     @Override
     public void runOpMode() {
