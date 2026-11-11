@@ -21,6 +21,7 @@ public class BlueAutoParkOnly extends OpMode {
     private MecanumPathFollower follower;
     private PathPlanner planner;
     private PlannedRoute currentRoute;
+    private Pose2D startPose;
     private Pose2D parkingPose;
     private boolean routeAttempted;
     private boolean holding;
@@ -43,7 +44,7 @@ public class BlueAutoParkOnly extends OpMode {
         planner = new PathPlanner(BioBuzzField.FIELD_SIZE,
                 robot.size.width, robot.size.length, 0.0, 2.0, 0.0);
         BioBuzzField.configureRestrictedZones(planner);
-        telemetry.addLine("Place robot at BLUE_SHOOTING_POSITION_LEFT, heading toward hive.");
+        telemetry.addLine("Place robot at BLUE_SHOOTING_POSITION_LEFT, facing the wall.");
         telemetry.addLine("Will navigate to BLUE_LOADING_ZONE when START is pressed.");
         telemetry.update();
     }
@@ -60,7 +61,7 @@ public class BlueAutoParkOnly extends OpMode {
         currentRoute = null;
 
         // Configure the robot's starting position
-        Pose2D startPose = BioBuzzField.getDestination(
+        startPose = BioBuzzField.getDestination(
                 BioBuzzField.Destination.BLUE_SHOOTING_POSITION_LEFT);
         robot.odom.update();
         robot.odom.setPosition(startPose);
@@ -168,10 +169,14 @@ public class BlueAutoParkOnly extends OpMode {
 
         telemetry.addData("State", planningFailed ? "PLANNING FAILED" :
                 follower.isFollowing() ? "Parking" : holding ? "Holding" : "Ready");
-        telemetry.addData("Position (in)", "X %.2f  Y %.2f",
-                Helper.getPoseX(pose), Helper.getPoseY(pose));
-        telemetry.addData("Heading (deg)", "%.1f", Helper.getPoseHeading(pose));
-        telemetry.addData("Parking target (in)", "X %.2f  Y %.2f",
+        telemetry.addData("Starting Position (in)", "(%.2f, %.2f, %.1f))",
+                Helper.getPoseX(startPose), Helper.getPoseY(startPose), Helper.getPoseHeading(startPose));
+
+        telemetry.addData("Current Position (in)", "(%.2f, %.2f, %.1f)",
+                Helper.getPoseX(pose), Helper.getPoseY(pose),  Helper.getPoseHeading(pose));
+
+
+        telemetry.addData("Parking target (in)", "(X %.2f, Y %.2f)",
                 Helper.getPoseX(parkingPose), Helper.getPoseY(parkingPose));
         telemetry.addData("Parking distance (in)", "%.2f",
                 Math.hypot(Helper.getPoseX(parkingPose) - Helper.getPoseX(pose),
@@ -189,6 +194,13 @@ public class BlueAutoParkOnly extends OpMode {
         }
 
         telemetry.addData("Parking Time", "%.2f seconds", parkingTime);
+        telemetry.addData("Segment Index", follower.segmentIndex());
+        telemetry.addData("Recovering", follower.isRecovering());
+        telemetry.addData("Distance From Path", "%.2f",
+                follower.getDistanceFromPath());
+        telemetry.addData("Command Forward / Strafe", "%.3f / %.3f",
+                follower.getCommandedForward(),
+                follower.getCommandedStrafe());
         telemetry.update();
     }
 

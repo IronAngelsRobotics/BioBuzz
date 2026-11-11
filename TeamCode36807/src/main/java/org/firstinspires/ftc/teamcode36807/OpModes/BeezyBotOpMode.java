@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode36807.OpModes;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode36807.Libs.SmoothServo;
 import org.firstinspires.ftc.teamcode36807.Robots.BeezyBot;
 
 
@@ -31,12 +32,15 @@ public class BeezyBotOpMode extends LinearOpMode {
     double currentFlywheelPower = 0.5;
     double intakeMaxPower = .4;
     private static final double funnelUpPosition = 0.41;
-    private static final double funnelDownPosition = 0.522;
+    private static final double funnelDownPosition = 0.521;
+    private SmoothServo lift;
 
     @Override
     public void runOpMode() {
         robot = new BeezyBot(hardwareMap);
         robot.servoLift.setPosition(.5); // lower funnel
+        lift = new SmoothServo(robot.servoLift);
+        lift.setSpeed(0.2);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -66,34 +70,39 @@ public class BeezyBotOpMode extends LinearOpMode {
                 if(power == 0){
                     robot.flywheel.setPower(currentFlywheelPower);
                     sleep(500);
-                    robot.servoLift.setPosition(funnelUpPosition);
+                    robot.intake.setPower(.1);
+                    lift.setPosition(funnelUpPosition);
                 }
                 else{
                     robot.flywheel.setPower(0);
                     robot.intake.setPower(0);
-                    robot.servoLift.setPosition(funnelDownPosition);
+                    lift.setPosition(funnelDownPosition);
                 }
             }
             // Press Y button to spin intake in the reverse direction.
             else if(currentY && !previousY){
                 // reverse spinning direction of intake.
                 robot.intake.setPower(0);
-                robot.servoLift.setPosition(funnelDownPosition);
+                lift.setPosition(funnelDownPosition);
                 sleep(250);
                 robot.intake.setPower(-intakeMaxPower);
             }
             // Toggle intake on/off
             else if(currentRightTrigger && !previousRightTrigger){
                 double power = robot.intake.getPower() != 0 ? 0 : intakeMaxPower;
-                robot.servoLift.setPosition(funnelDownPosition);
-                sleep(250);
+                if(power==intakeMaxPower) {
+                    lift.setPosition(funnelDownPosition);
+                    sleep(250);
+                }
                 robot.intake.setPower(power);
             }
             // raise/lower funnel
             else if(currentB && !previousB){
                 double position = robot.servoLift.getPosition() > 0.5 ? funnelUpPosition : funnelDownPosition;
                 robot.intake.setPower(0);
-                robot.servoLift.setPosition(position);
+                if(position < funnelDownPosition)
+                    robot.intake.setPower(.1);
+                lift.setPosition(position);
             }
 
             // increase speed of flywheel
@@ -110,6 +119,10 @@ public class BeezyBotOpMode extends LinearOpMode {
                 robot.flywheel.setPower(power);
                 currentFlywheelPower = power;
             }
+
+            lift.update();
+            if(lift.getPosition() <= funnelUpPosition)
+                robot.intake.setPower(0);
 
             previousLeftTrigger = currentLeftTrigger;
             previousRightTrigger = currentRightTrigger;

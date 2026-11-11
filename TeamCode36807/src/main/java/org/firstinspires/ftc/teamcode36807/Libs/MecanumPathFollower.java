@@ -53,7 +53,7 @@ public final class MecanumPathFollower {
     public double positionTolerance= 1.5;
 
     public double headingTolerance=4;
-    public double passThroughRadius=2.0;
+    public double passThroughRadius=3.0;
 
     private double holdX;
     private double holdY;
@@ -782,7 +782,13 @@ public final class MecanumPathFollower {
         boolean finalSegment=index==route.segments().size()-1;
         // PASS_THROUGH: require near-end progress AND physical proximity.
         double transitionRadius=Math.min(passThroughRadius,Math.max(0.5,curve.length()*0.25));
-        boolean passed=(!recovering&&t>=0.90&&distance<=transitionRadius);
+        // Allow transition when physically close to the waypoint.
+        boolean passed =
+                !recovering &&
+                        (
+                                (t >= 0.90 && distance <= transitionRadius)
+                                        || distance <= positionTolerance
+                        );
         boolean arrived=distance<=positionTolerance&&Math.abs(headingErr)<=headingTolerance;
         if(segment.mode==WaypointMode.PASS_THROUGH && !finalSegment && passed) {
             enterSegment(index + 1, pose);
