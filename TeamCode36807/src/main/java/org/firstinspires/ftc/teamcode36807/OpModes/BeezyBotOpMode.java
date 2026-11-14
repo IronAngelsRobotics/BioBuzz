@@ -2,7 +2,9 @@ package org.firstinspires.ftc.teamcode36807.OpModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.sun.tools.javac.jvm.Code;
 
+import org.firstinspires.ftc.teamcode36807.Libs.Constants;
 import org.firstinspires.ftc.teamcode36807.Libs.SmoothServo;
 import org.firstinspires.ftc.teamcode36807.Robots.BeezyBot;
 
@@ -24,15 +26,17 @@ public class BeezyBotOpMode extends LinearOpMode {
     // Declare variables
     BeezyBot robot;
     boolean previousLeftTrigger = false; // toggle flywheel & middle servo
+    boolean previousLeftTrigger2 = false;
     boolean previousRightTrigger = false; // toggle intake
     boolean previousX = false;
     boolean previousA = false;
     boolean previousB = false;
+    boolean previousB2 = false;
     boolean previousY = false;
-    double currentFlywheelPower = 0.5;
-    double intakeMaxPower = .4;
-    private static final double funnelUpPosition = 0.41;
-    private static final double funnelDownPosition = 0.521;
+    double currentFlywheelPower = Constants.FLYWHEEL_POWER;
+    double intakeMaxPower = .40;
+    private static final double funnelUpPosition = Constants.LIFT_UP;
+    private static final double funnelDownPosition = Constants.LIFT_DOWN;
     private SmoothServo lift;
 
     @Override
@@ -40,7 +44,7 @@ public class BeezyBotOpMode extends LinearOpMode {
         robot = new BeezyBot(hardwareMap);
         robot.servoLift.setPosition(.5); // lower funnel
         lift = new SmoothServo(robot.servoLift);
-        lift.setSpeed(0.2);
+        lift.setSpeed(0.3);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -52,10 +56,13 @@ public class BeezyBotOpMode extends LinearOpMode {
             double strafe  = gamepad1.left_stick_x;
             double turn    = gamepad1.right_stick_x;
             boolean currentLeftTrigger = gamepad1.left_trigger_pressed;
+            boolean currentLeftTrigger2 = gamepad2.left_trigger_pressed;
+
             boolean currentRightTrigger = gamepad1.right_trigger_pressed;
             boolean currentX = gamepad1.x;
             boolean currentA = gamepad1.a;
             boolean currentB = gamepad1.b;
+            boolean currentB2 = gamepad2.b;
             boolean currentY= gamepad1.y;
 
 
@@ -64,16 +71,18 @@ public class BeezyBotOpMode extends LinearOpMode {
 
             // Press left trigger to start flywheel, stop intake, and raise funnel.
             // Or, reset flywheel, funnel and leave funnel down.
-            if (currentLeftTrigger && !previousLeftTrigger)
+            if ((currentLeftTrigger && !previousLeftTrigger) || (currentLeftTrigger2 && !previousLeftTrigger2))
             {
                 double power = robot.flywheel.getPower();
                 if(power == 0){
                     robot.flywheel.setPower(currentFlywheelPower);
                     sleep(500);
-                    robot.intake.setPower(.1);
+                    robot.servoMiddle.setPower(Constants.SERVO_MIDDLE_POWER);
                     lift.setPosition(funnelUpPosition);
+                    robot.intake.setPower(.2);
                 }
                 else{
+                    robot.servoMiddle.setPower(0);
                     robot.flywheel.setPower(0);
                     robot.intake.setPower(0);
                     lift.setPosition(funnelDownPosition);
@@ -97,37 +106,37 @@ public class BeezyBotOpMode extends LinearOpMode {
                 robot.intake.setPower(power);
             }
             // raise/lower funnel
-            else if(currentB && !previousB){
-                double position = robot.servoLift.getPosition() > 0.5 ? funnelUpPosition : funnelDownPosition;
+            else if((currentB && !previousB) || (currentB2 && !previousB2)){
+                double position = robot.servoLift.getPosition() >= 0.5 ? funnelUpPosition : funnelDownPosition;
                 robot.intake.setPower(0);
-                if(position < funnelDownPosition)
-                    robot.intake.setPower(.1);
                 lift.setPosition(position);
             }
 
             // increase speed of flywheel
             else if(currentX && !previousX){
-                double new_power = robot.flywheel.getPower() + .1;
+                double new_power = robot.flywheel.getPower() + .01;
                 double power = (new_power > 1) ? 1 : new_power;
                 robot.flywheel.setPower(power);
                 currentFlywheelPower = power;
             }
             // decrease speed of flywheel
             else if(currentA && !previousA){
-                double new_power = robot.flywheel.getPower() - .1;
+                double new_power = robot.flywheel.getPower() - .01;
                 double power = (new_power < 0) ? 0 : new_power;
                 robot.flywheel.setPower(power);
                 currentFlywheelPower = power;
             }
 
             lift.update();
-            if(lift.getPosition() <= funnelUpPosition)
-                robot.intake.setPower(0);
+//            if(lift.getPosition() <= funnelUpPosition)
+//                robot.intake.setPower(0);
 
             previousLeftTrigger = currentLeftTrigger;
+            previousLeftTrigger2 = currentLeftTrigger2;
             previousRightTrigger = currentRightTrigger;
             previousA = currentA;
             previousB  = currentB;
+            previousB2  = currentB2;
             previousX = currentX;
             previousY = currentY;
 

@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode36807.Robots;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -22,6 +23,7 @@ public class BeezyBot {
     public final DcMotor intake;
     public final RGBIndicator rgb;
     public final Servo servoLift;
+    public CRServo servoMiddle;
 
     // width measured includes the width of wheels
     public final RobotSize size = new RobotSize(17.25, 16.5);
@@ -33,7 +35,8 @@ public class BeezyBot {
         flywheel = hardwareMap.get(DcMotorEx.class, "flyWheel");
         rgb = new RGBIndicator(hardwareMap, "rgb");
         servoLift = hardwareMap.get(Servo.class, "servoLift");
-;
+        servoMiddle = hardwareMap.get(CRServo.class, "servoMiddle");
+
         // Motor (wheel) should rotate in the forward direction, relative to the robot,
         // when positive power is applied.
         drive.setDirection(MecanumDrive.Wheel.FRONT_LEFT, DcMotorSimple.Direction.REVERSE);

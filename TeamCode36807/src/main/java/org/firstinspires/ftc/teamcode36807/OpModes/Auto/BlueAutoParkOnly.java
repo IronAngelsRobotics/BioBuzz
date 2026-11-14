@@ -115,12 +115,12 @@ public class BlueAutoParkOnly extends OpMode {
             // Intermediate waypoint:
             // Move forward first, keeping the same X coordinate.
             double waypointX = startX;
-            double waypointY = parkY;
+            double waypointY = 24;
 
             // Create an L-shaped route.
             PathSequence sequence = new PathSequence()
 
-                    // Step 1: Move forward to (83.5, 36)
+                    // Step 1: Move forward to (83.5, 24)
                     .add(
                             waypointX,
                             waypointY,
@@ -129,10 +129,10 @@ public class BlueAutoParkOnly extends OpMode {
                             WaypointMode.PASS_THROUGH
                     )
 
-                    // Step 2: Strafe right to (132, 36)
+                    // Step 2: Strafe right to (132, 24)
                     .add(
                             parkX,
-                            parkY,
+                            waypointY,
                             heading,
                             heading,
                             WaypointMode.STOP

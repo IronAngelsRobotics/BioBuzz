@@ -21,10 +21,10 @@ public class BlueShootAndPark extends OpMode {
     private static final double AUTO_LIMIT_SECONDS = 30.0;
     private static final double SPINUP_SECONDS = 0.5;
     private static final double FEED_SECONDS = 6.0;
-    private static final double FLYWHEEL_POWER = 0.5;
     private static final double RETREAT_DISTANCE_INCHES = 12.0;
-    private static final double LIFT_FEED = 0.41;
-    private static final double LIFT_REST = 0.5;
+    private static final double FLYWHEEL_POWER = Constants.FLYWHEEL_POWER;
+    private static final double LIFT_FEED = Constants.LIFT_UP;
+    private static final double LIFT_REST = Constants.LIFT_DOWN;
 
     private enum State { READY, SPINUP, FEEDING, RETREATING, PARKING, HOLDING, FAILED, FINISHED }
 
@@ -80,8 +80,9 @@ public class BlueShootAndPark extends OpMode {
                 Helper.getPoseX(loadingZone), Helper.getPoseY(loadingZone), robotHeading);
 
         robot.intake.setPower(0);
-        robot.servoLift.setPosition(LIFT_REST);
+
         robot.flywheel.setPower(FLYWHEEL_POWER);
+        robot.servoLift.setPosition(LIFT_REST);
         robot.rgb.blink(RGBIndicator.Color.YELLOW, 250);
         phaseTimer.reset();
         state = State.SPINUP;
@@ -111,12 +112,15 @@ public class BlueShootAndPark extends OpMode {
                 if (phaseTimer.seconds() >= SPINUP_SECONDS) {
                     robot.servoLift.setPosition(LIFT_FEED);
                     phaseTimer.reset();
+                    robot.servoMiddle.setPower(Constants.SERVO_MIDDLE_POWER);
+                    robot.intake.setPower(.2);
                     state = State.FEEDING;
                 }
                 break;
 
             case FEEDING:
                 if (phaseTimer.seconds() >= FEED_SECONDS) {
+                    robot.intake.setPower(0);
                     stopShooting();
                     planRetreat(pose);
                 }
@@ -209,7 +213,7 @@ public class BlueShootAndPark extends OpMode {
     private void planParking(Pose2D pose) {
         double heading = Helper.getPoseHeading(pose);
         PathSequence destination = new PathSequence()
-                .add(Helper.getPoseX(parkingPose), Helper.getPoseY(parkingPose),
+                .add(Helper.getPoseX(parkingPose), 48,
                         heading, heading, WaypointMode.STOP);
 
         PlannedRoute route = planner.plan(pose, destination, heading);
@@ -233,6 +237,7 @@ public class BlueShootAndPark extends OpMode {
     private void stopShooting() {
         robot.flywheel.setPower(0);
         robot.intake.setPower(0);
+        robot.servoMiddle.setPower(0);
         robot.servoLift.setPosition(LIFT_REST);
     }
 
