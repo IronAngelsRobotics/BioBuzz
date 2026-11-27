@@ -1,0 +1,212 @@
+package org.firstinspires.ftc.teamcode36807.OpModes.Auto;
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode36807.Libs.*;
+import org.firstinspires.ftc.teamcode36807.Robots.BeezyBot;
+
+/**
+ * Starts at the red-left shooting position and navigates once to the
+ * red loading/parking zone, avoiding the configured restricted zones.
+ * Keeps the starting heading and holds the parking pose on arrival.
+ */
+@Autonomous(name = "RedParkOnly")
+public class RedAutoParkOnly extends OpMode {
+    private BeezyBot robot;
+    private MecanumPathFollower follower;
+    private PathPlanner planner;
+    private PlannedRoute currentRoute;
+    private Pose2D startPose;
+    private Pose2D parkingPose;
+    private boolean routeAttempted;
+    private boolean holding;
+    private boolean planningFailed;
+    private final ElapsedTime runtime = new ElapsedTime();
+    private boolean autoFinished = false;
+    private double parkingTime = Double.NaN;
+
+    @Override
+    public void init() {
+        robot = new BeezyBot(hardwareMap);
+        robot.odom.resetPosAndIMU();
+
+        follower = new MecanumPathFollower(
+                robot.drive.getWheel(MecanumDrive.Wheel.FRONT_LEFT),
+                robot.drive.getWheel(MecanumDrive.Wheel.FRONT_RIGHT),
+                robot.drive.getWheel(MecanumDrive.Wheel.BACK_LEFT),
+                robot.drive.getWheel(MecanumDrive.Wheel.BACK_RIGHT));
+
+        planner = new PathPlanner(BioBuzzField.FIELD_SIZE,
+                robot.size.width, robot.size.length, 0.0, 2.0, 0.0);
+        BioBuzzField.configureRestrictedZones(planner);
+        telemetry.addLine("Place robot at RED_SHOOTING_POSITION_LEFT, facing the wall.");
+        telemetry.addLine("Will navigate to RED_LOADING_ZONE when START is pressed.");
+        telemetry.update();
+    }
+
+    @Override
+    public void start() {
+        runtime.reset();
+        autoFinished = false;
+        parkingTime = Double.NaN;
+
+        routeAttempted = false;
+        holding = false;
+        planningFailed = false;
+        currentRoute = null;
+
+        // Configure the robot's starting position
+        startPose = BioBuzzField.getDestination(
+                BioBuzzField.Destination.RED_SHOOTING_POSITION_LEFT);
+        robot.odom.update();
+        robot.odom.setPosition(startPose);
+
+
+        Pose2D loadingZone = BioBuzzField.getDestination(
+                BioBuzzField.Destination.RED_LOADING_ZONE);
+
+        // If loading-zone heading is NaN (unspecified). Preserve the start heading.
+        double heading = Double.isNaN(Helper.getPoseHeading(loadingZone))
+                ? Helper.getPoseHeading(startPose)
+                : Helper.getPoseHeading(loadingZone);
+
+        parkingPose = Helper.getPose2D(
+                Helper.getPoseX(loadingZone), Helper.getPoseY(loadingZone),
+                heading);
+
+        robot.rgb.green();
+        robot.servoLift.setPosition(0.5);
+    }
+
+    @Override
+    public void loop() {
+        // Nothing to do after autonomous finishes.
+        if (autoFinished) return;
+
+        if (runtime.seconds() >= 30.0) {
+            if (follower != null) follower.stop();
+            robot.stop();
+            autoFinished = true;
+            return;
+        }
+
+        robot.odom.update();
+        Pose2D pose = Helper.getPose2D(
+                robot.odom.getPosX(DistanceUnit.INCH),
+                robot.odom.getPosY(DistanceUnit.INCH),
+                robot.odom.getHeading(AngleUnit.DEGREES));
+
+        if (!routeAttempted) {
+            routeAttempted = true;
+
+            // Current robot position
+            double startX = Helper.getPoseX(pose);
+            double heading = Helper.getPoseHeading(pose);
+
+            // Final parking position
+            double parkX = Helper.getPoseX(parkingPose);
+            double parkY = Helper.getPoseY(parkingPose);
+
+            // Intermediate waypoint:
+            // Move backward first, keeping the same X coordinate.
+            double waypointX = startX;
+            double waypointY = 120;
+
+            // Create an L-shaped route.
+            PathSequence sequence = new PathSequence()
+
+                    // Step 1: Move backward
+                    .add(
+                            waypointX,
+                            waypointY,
+                            heading,
+                            heading,
+                            WaypointMode.PASS_THROUGH
+                    )
+
+                    // Step 2: Strafe right
+                    .add(
+                            parkX,
+                            waypointY,
+                            heading,
+                            heading,
+                            WaypointMode.STOP
+                    );
+
+            currentRoute = planner.plan(
+                    pose,
+                    sequence,
+                    heading
+            );
+            if (currentRoute == null || currentRoute.isEmpty()) {
+                planningFailed = true;
+                robot.drive.setPower(0, 0, 0);
+                robot.rgb.off();
+            } else {
+                follower.start(currentRoute);
+            }
+        }
+
+        if (follower.isFollowing()) {
+            follower.update(pose);
+            if (!follower.isFollowing()) {
+                follower.startHolding(parkingPose);
+                holding = true;
+                robot.rgb.green();
+            }
+        } else if (holding) {
+            follower.holdPosition(pose);
+        }
+
+        if (holding && Double.isNaN(parkingTime)) {
+            parkingTime = runtime.seconds();
+        }
+
+        telemetry.addData("State", planningFailed ? "PLANNING FAILED" :
+                follower.isFollowing() ? "Parking" : holding ? "Holding" : "Ready");
+        telemetry.addData("Starting Position (in)", "(%.2f, %.2f, %.1f)",
+                Helper.getPoseX(startPose), Helper.getPoseY(startPose), Helper.getPoseHeading(startPose));
+
+        telemetry.addData("Current Position (in)", "(%.2f, %.2f, %.1f)",
+                Helper.getPoseX(pose), Helper.getPoseY(pose),  Helper.getPoseHeading(pose));
+
+
+        telemetry.addData("Parking target (in)", "(X %.2f, Y %.2f)",
+                Helper.getPoseX(parkingPose), Helper.getPoseY(parkingPose));
+        telemetry.addData("Parking distance (in)", "%.2f",
+                Math.hypot(Helper.getPoseX(parkingPose) - Helper.getPoseX(pose),
+                        Helper.getPoseY(parkingPose) - Helper.getPoseY(pose)));
+        if (currentRoute != null && !currentRoute.isEmpty()) {
+            telemetry.addData("Route segments", currentRoute.segments().size());
+            telemetry.addData("Follower target", "X %.2f  Y %.2f",
+                    follower.getTargetX(), follower.getTargetY());
+        }
+
+        if (planningFailed) {
+            telemetry.addData("Failure Reason", planner.getFailureReason());
+            telemetry.addData("Failure Details", planner.getFailureDetails());
+            telemetry.addData("Failed Waypoint", planner.getFailedWaypoint());
+        }
+
+        telemetry.addData("Parking Time", "%.2f seconds", parkingTime);
+        telemetry.addData("Segment Index", follower.segmentIndex());
+        telemetry.addData("Recovering", follower.isRecovering());
+        telemetry.addData("Distance From Path", "%.2f",
+                follower.getDistanceFromPath());
+        telemetry.addData("Command Forward / Strafe", "%.3f / %.3f",
+                follower.getCommandedForward(),
+                follower.getCommandedStrafe());
+        telemetry.update();
+    }
+
+    @Override
+    public void stop() {
+        if (follower != null) follower.stop();
+        if (robot != null) robot.stop();
+    }
+}
