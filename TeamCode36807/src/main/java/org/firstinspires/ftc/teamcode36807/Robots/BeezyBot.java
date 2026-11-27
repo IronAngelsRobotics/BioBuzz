@@ -84,6 +84,7 @@ public class BeezyBot {
         drive.setPower(0, 0, 0);
         intake.setPower(0);
         flywheel.setPower(0);
+        servoMiddle.setPower(0);
         servoLift.setPosition(0.5); // 0 degree
         rgb.off();
     }

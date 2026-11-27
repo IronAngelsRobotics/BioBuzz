@@ -67,4 +67,9 @@ public class SmoothServo {
     public double getPosition() {
         return currentPosition;
     }
+
+    // The position the servo is moving toward (last value passed to setPosition).
+    public double getTargetPosition() {
+        return targetPosition;
+    }
 }
